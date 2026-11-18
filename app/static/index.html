@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>What If</title>
+  <style>
+    :root {
+      --bg: #f6f5f1;
+      --card: #fff;
+      --ink: #1d1d1b;
+      --mut: #6b6a64;
+      --acc: #3b5bdb;
+      --line: #e4e2da
+    }
+
+    @media(prefers-color-scheme:dark) {
+      :root {
+        --bg: #161614;
+        --card: #211f1d;
+        --ink: #eeeae2;
+        --mut: #9c9a92;
+        --acc: #7b93ff;
+        --line: #34322e
+      }
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font: 16px/1.55 system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink)
+    }
+
+    main {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 20px 16px 60px
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin: .2em 0
+    }
+
+    h3 {
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--mut);
+      margin: 18px 0 6px
+    }
+
+    .sub {
+      color: var(--mut);
+      margin: 0 0 18px;
+      font-size: .9rem
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px
+    }
+
+    nav {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      flex-wrap: wrap
+    }
+
+    nav button,
+    .btn {
+      background: var(--card);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font: inherit
+    }
+
+    nav button.on,
+    .btn.p {
+      background: var(--acc);
+      color: #fff;
+      border-color: var(--acc)
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--ink);
+      font: inherit;
+      margin: 6px 0
+    }
+
+    textarea {
+      min-height: 170px;
+      resize: vertical
+    }
+
+    .row {
+      display: flex;
+      gap: 8px
+    }
+
+    .row>* {
+      flex: 1
+    }
+
+    pre {
+      white-space: pre-wrap;
+      font: inherit;
+      margin: 0
+    }
+
+    .mut {
+      color: var(--mut);
+      font-size: .85rem
+    }
+
+    .err {
+      color: #d6336c
+    }
+
+    .tag {
+      display: inline-block;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 1px 8px;
+      margin: 2px;
+      font-size: .8rem
+    }
+
+    .short {
+      font-weight: 600;
+      margin: 0
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 20px
+    }
+
+    .scroll {
+      overflow-x: auto
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: .92rem
+    }
+
+    th,
+    td {
+      text-align: left;
+      vertical-align: top;
+      padding: 8px 10px;
+      border: 1px solid var(--line)
+    }
+
+    th {
+      background: var(--bg);
+      font-weight: 600
+    }
+
+    td:nth-child(3) {
+      white-space: nowrap;
+      font-weight: 600
+    }
+
+    .hist {
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      margin-top: 12px
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>What If</h1>
+    <p class="sub" id="sub">Private future simulator. Reflection tool, not a prediction.</p>
+
+    <div id="lock" class="card" hidden>
+      <b id="lockTitle">Unlock</b>
+      <input id="pass" type="password" placeholder="Passphrase (min 8 characters)" autocomplete="off">
+      <button class="btn p" onclick="unlock()">Unlock</button> <span id="lockErr" class="err"></span>
+      <p class="mut">First time? Whatever you type becomes your passphrase. Write it down: it cannot be recovered.</p>
+    </div>
+
+    <div id="app" hidden>
+      <nav>
+        <button data-t="diary" class="on">Diary</button><button data-t="ask">What if...</button>
+        <button data-t="mind">My profile</button><button data-t="past">History</button>
+        <button onclick="exportAll()" style="margin-left:auto">Export</button><button onclick="lockNow()">Lock</button>
+      </nav>
+
+      <section id="diary" class="card">
+        <div class="row"><input id="day" type="date"><select id="mood">
+            <option value="">Mood</option>
+            <option>great</option>
+            <option>good</option>
+            <option>okay</option>
+            <option>low</option>
+            <option>bad</option>
+          </select></div>
+        <textarea id="text" placeholder="How was your day? Decisions, worries, wins..."></textarea>
+        <input id="tags" placeholder="tags, comma separated (work, family, money)">
+        <button class="btn p" onclick="saveEntry()">Save entry</button>
+        <button class="btn" onclick="runDaily()">Generate daily insight</button> <span id="dMsg" class="mut"></span>
+        <div id="insight" style="margin-top:12px"></div>
+        <div id="otd"></div>
+      </section>
+
+      <section id="ask" class="card" hidden>
+        <textarea id="q" style="min-height:90px" placeholder="What if I quit my job and start a business?"></textarea>
+        <button class="btn p" id="goBtn" onclick="ask()">Simulate</button> <span id="aMsg" class="mut"></span>
+        <div id="ans" style="margin-top:14px"></div>
+      </section>
+
+      <section id="mind" class="card" hidden>
+        <pre id="prof">Loading...</pre>
+      </section>
+      <section id="past" class="card" hidden>
+        <div id="hist"></div>
+      </section>
+    </div>
+
+    <script>
+      let T = null; const $ = id => document.getElementById(id);
+      const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      const h = (tag, text, cls) => { const e = document.createElement(tag); if (text != null) e.textContent = text; if (cls) e.className = cls; return e };
+      const list = items => { const ul = h('ul'); items.forEach(i => ul.append(h('li', i))); return ul };
+
+      async function api(path, method = 'GET', body) {
+        const r = await fetch('/api/' + path, { method, headers: { 'Content-Type': 'application/json', 'X-Token': T || '' }, body: body ? JSON.stringify(body) : undefined });
+        const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.detail || r.statusText); return j;
+      }
+
+      function renderAnswer(res, evidence) {
+        const box = h('div');
+        if (res.raw) { box.append(h('pre', res.raw)) }
+        else {
+          if (res.short_answer) box.append(h('p', res.short_answer, 'short'));
+          if (res.diary_says.length) { box.append(h('h3', 'What your diary says'), list(res.diary_says)) }
+          box.append(h('h3', 'Your options'));
+          const t = h('table'), head = t.createTHead().insertRow(), body = t.createTBody();
+          ['Option', 'What happens', 'Rough estimate', 'Main risk'].forEach(x => head.append(h('th', x)));
+          res.options.forEach(o => { const r = body.insertRow();[o.name, o.what_happens, o.chance_good, o.main_risk].forEach(x => r.insertCell().textContent = x) });
+          const wrap = h('div', null, 'scroll'); wrap.append(t); box.append(wrap);
+          if (res.blind_spots.length) box.append(h('h3', 'Hidden risks'), list(res.blind_spots));
+          box.append(h('h3', 'First 3 actions, next 30 days'), list(res.actions));
+          box.append(h('h3', 'Confidence'), h('p', `${res.confidence.level}. ${res.confidence.why}`));
+        }
+        if (evidence?.length) { const p = h('p', 'Evidence: ', 'mut'); evidence.forEach(d => p.append(h('span', d, 'tag'))); box.append(p) }
+        return box;
+      }
+
+      async function init() {
+        const s = await api('status'); $('lock').hidden = false;
+        $('lockTitle').textContent = s.initialised ? 'Unlock your vault' : 'Create your vault';
+        $('sub').textContent = `Answers: ${s.answer_mode} | Daily insights: ${s.daily_mode} | Search: ${s.embeddings}`;
+        $('day').value = new Date().toLocaleDateString('en-CA');
+      }
+      async function unlock() {
+        try {
+          T = (await api('unlock', 'POST', { passphrase: $('pass').value })).token; $('pass').value = '';
+          $('lock').hidden = true; $('app').hidden = false; loadDay();
+        } catch (e) { $('lockErr').textContent = e.message }
+      }
+      function lockNow() { api('lock', 'POST').finally(() => location.reload()) }
+      async function exportAll() {
+        const a = h('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(await api('export'), null, 2)], { type: 'application/json' }));
+        a.download = 'whatif-export.json'; a.click();
+      }
+      document.querySelectorAll('nav button[data-t]').forEach(b => b.onclick = () => {
+        document.querySelectorAll('nav button[data-t]').forEach(x => x.classList.toggle('on', x === b));
+        ['diary', 'ask', 'mind', 'past'].forEach(id => $(id).hidden = id !== b.dataset.t);
+        if (b.dataset.t === 'mind') api('profile').then(r => $('prof').textContent = r.profile || 'Your profile appears after your first daily insight.');
+        if (b.dataset.t === 'past') api('history').then(r => {
+          $('hist').replaceChildren(...(r.chats.length ? r.chats.map(c => {
+            const d = h('div', null, 'hist'); d.append(h('b', c.question), renderAnswer(c.result || { raw: c.answer || '' }, c.evidence)); return d
+          }) : [h('p', 'Nothing yet.')]))
+        });
+      });
+      $('day')?.addEventListener('change', () => loadDay());
+      async function loadDay() {
+        const r = await api('entry/' + $('day').value);
+        $('text').value = r.entry?.text || ''; $('mood').value = r.entry?.mood || ''; $('tags').value = (r.entry?.tags || []).join(', ');
+        $('insight').innerHTML = r.insight ? `<div class="card"><b>Daily insight</b><pre>${esc(r.insight.summary)}</pre></div>` : '';
+        const o = await api('onthisday'); $('otd').innerHTML = o.items.map(i => `<div class="card"><b>On this day, ${i.day}</b><pre>${esc(i.text)}</pre></div>`).join('');
+      }
+      async function saveEntry() {
+        try {
+          await api('entry', 'POST', {
+            day: $('day').value, text: $('text').value, mood: $('mood').value || null,
+            tags: $('tags').value.split(',').map(s => s.trim()).filter(Boolean)
+          }); $('dMsg').textContent = 'Saved.'
+        } catch (e) { $('dMsg').textContent = e.message }
+      }
+      async function runDaily() {
+        $('dMsg').textContent = 'Thinking...';
+        try { await saveEntry(); await api('daily/' + $('day').value, 'POST'); $('dMsg').textContent = ''; loadDay() } catch (e) { $('dMsg').textContent = e.message }
+      }
+      async function ask() {
+        $('aMsg').textContent = 'Simulating...'; $('goBtn').disabled = true;
+        try {
+          const r = await api('whatif', 'POST', { question: $('q').value });
+          $('ans').replaceChildren(renderAnswer(r.result, r.evidence)); $('aMsg').textContent = '';
+        }
+        catch (e) { $('aMsg').textContent = e.message } $('goBtn').disabled = false;
+      }
+      init();
+    </script>
+  </main>
+</body>
+
+</html>
